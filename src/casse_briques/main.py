@@ -14,6 +14,13 @@ NOIR = (20, 20, 20)
 BLANC = (240, 240, 240)
 TURQUOISE = (23, 154, 175)
 JAUNE = (255, 207, 0)
+COULEURS_LIGNES = [
+    (231, 76, 60),    # rouge
+    (230, 126, 34),   # orange
+    (241, 196, 15),   # jaune
+    (46, 204, 113),   # vert
+    (52, 152, 219),   # bleu
+]
 
 LARGEUR_RAQUETTE = 100
 HAUTEUR_RAQUETTE = 12
@@ -23,6 +30,14 @@ MARGE_BAS = 30  # distance entre la raquette et le bas de l'écran
 Vitesse = tuple[int, int]
 TAILLE_BALLE = 12
 VITESSE_INITIALE: Vitesse = (4, -4)
+
+Mur = list[pygame.Rect]
+NB_LIGNES = 5
+NB_COLONNES = 10
+ESPACEMENT = 4
+MARGE_HAUT = 60
+HAUTEUR_BRIQUE = 20
+LARGEUR_BRIQUE = (LARGEUR - (NB_COLONNES + 1) * ESPACEMENT) // NB_COLONNES
 
 
 def initialiser_raquette() -> pygame.Rect:
@@ -95,11 +110,30 @@ def rebondir_raquette(balle: pygame.Rect, vitesse: Vitesse, raquette: pygame.Rec
     return vx, vy
 
 
+def creer_mur() -> Mur:
+    """Crée la liste des briques, ligne par ligne."""
+    mur: Mur = []
+    for ligne in range(NB_LIGNES):
+        for colonne in range(NB_COLONNES):
+            x = ESPACEMENT + colonne * (LARGEUR_BRIQUE + ESPACEMENT)
+            y = MARGE_HAUT + ligne * (HAUTEUR_BRIQUE + ESPACEMENT)
+            mur.append(pygame.Rect(x, y, LARGEUR_BRIQUE, HAUTEUR_BRIQUE))
+    return mur
+
+
+def dessiner_mur(mur: Mur) -> None:
+    for brique in mur:
+        # On retrouve le numéro de ligne à partir de l'ordonnée de la brique
+        ligne = (brique.y - MARGE_HAUT) // (HAUTEUR_BRIQUE + ESPACEMENT)
+        pygame.draw.rect(ecran, COULEURS_LIGNES[ligne], brique)
+
+
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
     balle = initialiser_balle()
     vitesse = VITESSE_INITIALE
+    mur = creer_mur()
 
     en_cours: bool = True
     while en_cours:
@@ -113,6 +147,7 @@ def main() -> None:
         vitesse = rebondir_raquette(balle, vitesse, raquette)
 
         ecran.fill(NOIR)
+        dessiner_mur(mur)
         dessiner_raquette(raquette)
         dessiner_balle(balle)
         pygame.display.update()
