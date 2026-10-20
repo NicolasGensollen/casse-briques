@@ -1,3 +1,4 @@
+import math
 import pygame
 
 
@@ -27,8 +28,8 @@ HAUTEUR_RAQUETTE = 12
 VITESSE_RAQUETTE = 7
 MARGE_BAS = 30  # distance entre la raquette et le bas de l'écran
 
-Vitesse = tuple[int, int]
-Position = tuple[int, int]
+Vitesse = tuple[float, float]
+Position = tuple[float, float]
 TAILLE_BALLE = 12
 VITESSE_INITIALE: Vitesse = (4, -4)
 
@@ -45,6 +46,8 @@ POINTS_PAR_BRIQUE = 10
 
 police = pygame.font.SysFont(None, 32)
 grande_police = pygame.font.SysFont(None, 48)
+
+ANGLE_MAX = 60 # angle maximal (en degrés) par rapport à la verticale
 
 
 def initialiser_raquette() -> pygame.Rect:
@@ -113,7 +116,12 @@ def rebondir_raquette(balle: pygame.Rect, vitesse: Vitesse, raquette: pygame.Rec
     vx, vy = vitesse
     if balle.colliderect(raquette) and vy > 0:
         balle.bottom = raquette.top
-        vy = -vy
+        decalage = (balle.centerx - raquette.centerx) / (raquette.width / 2)
+        decalage = max(-1.0, min(1.0, decalage))  # bornage dans [-1, 1]
+        angle = math.radians(ANGLE_MAX * decalage)
+        norme = math.hypot(vx, vy)
+        vx = norme * math.sin(angle)
+        vy = -norme * math.cos(angle)
     return vx, vy
 
 
@@ -187,6 +195,13 @@ def coller_balle(balle: pygame.Rect, raquette: pygame.Rect) -> Position:
     return float(balle.centerx), float(balle.centery)
 
 
+def synchroniser_position(balle: pygame.Rect, position: Position) -> Position:
+    """Si un rebond a recalé le rectangle, on recale aussi la position flottante."""
+    if balle.center != (round(position[0]), round(position[1])):
+        return float(balle.centerx), float(balle.centery)
+    return position
+
+
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
@@ -220,6 +235,7 @@ def main() -> None:
                 vitesse = rebondir_murs(balle, vitesse)
                 vitesse = rebondir_raquette(balle, vitesse, raquette)
                 vitesse, nb_detruites = gerer_collision_briques(balle, vitesse, mur)
+                position = synchroniser_position(balle, position)
                 score += nb_detruites * POINTS_PAR_BRIQUE
 
             if balle_perdue(balle):
