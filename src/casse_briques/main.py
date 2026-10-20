@@ -39,6 +39,8 @@ MARGE_HAUT = 60
 HAUTEUR_BRIQUE = 20
 LARGEUR_BRIQUE = (LARGEUR - (NB_COLONNES + 1) * ESPACEMENT) // NB_COLONNES
 
+VIES_INITIALES = 3
+
 
 def initialiser_raquette() -> pygame.Rect:
     """Crée la raquette centrée horizontalement, en bas de l'écran."""
@@ -154,29 +156,46 @@ def gerer_collision_briques(balle: pygame.Rect, vitesse: Vitesse, mur: Mur) -> t
     return (vx, vy), 1
 
 
+def balle_perdue(balle: pygame.Rect) -> bool:
+    return balle.top > HAUTEUR
+
+
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
     balle = initialiser_balle()
     vitesse = VITESSE_INITIALE
     mur = creer_mur()
-
+    vies = VIES_INITIALES
+    game_over: bool = False
     en_cours: bool = True
+    
     while en_cours:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 en_cours = False
 
-        deplacer_raquette(raquette, pygame.key.get_pressed())
-        deplacer_balle(balle, vitesse)
-        vitesse = rebondir_murs(balle, vitesse)
-        vitesse = rebondir_raquette(balle, vitesse, raquette)
-        vitesse, nb_detruites = gerer_collision_briques(balle, vitesse, mur)
+        if not game_over:
+            deplacer_raquette(raquette, pygame.key.get_pressed())
+            deplacer_balle(balle, vitesse)
+            vitesse = rebondir_murs(balle, vitesse)
+            vitesse = rebondir_raquette(balle, vitesse, raquette)
+            vitesse, nb_detruites = gerer_collision_briques(balle, vitesse, mur)
+
+            if balle_perdue(balle):
+                vies -= 1
+                if vies == 0:
+                    game_over = True
+                else:
+                    raquette = initialiser_raquette()
+                    balle = initialiser_balle()
+                    vitesse = VITESSE_INITIALE
 
         ecran.fill(NOIR)
         dessiner_mur(mur)
         dessiner_raquette(raquette)
-        dessiner_balle(balle)
+        if not game_over:
+            dessiner_balle(balle)
         pygame.display.update()
         horloge.tick(FPS)
 
