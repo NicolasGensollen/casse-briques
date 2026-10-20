@@ -138,7 +138,20 @@ def gerer_collision_briques(balle: pygame.Rect, vitesse: Vitesse, mur: Mur) -> t
         return vitesse, 0
     brique = mur.pop(indice)
     vx, vy = vitesse
-    return (vx, -1 * vy), 1
+    
+    # Largeur et hauteur de la zone de chevauchement entre la balle et la brique.
+    # Si le chevauchement est plus étroit que haut, la balle a touché un côté
+    # de la brique : on inverse la composante horizontale. Sinon, elle a touché
+    # le dessus ou le dessous : on inverse la composante verticale.
+    chevauchement_x = min(balle.right, brique.right) - max(balle.left, brique.left)
+    chevauchement_y = min(balle.bottom, brique.bottom) - max(balle.top, brique.top)
+ 
+    if chevauchement_x < chevauchement_y:
+        vx = -vx
+    else:
+        vy = -vy
+    
+    return (vx, vy), 1
 
 
 def main() -> None:
