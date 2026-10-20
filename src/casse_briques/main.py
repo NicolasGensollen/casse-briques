@@ -20,6 +20,10 @@ HAUTEUR_RAQUETTE = 12
 VITESSE_RAQUETTE = 7
 MARGE_BAS = 30  # distance entre la raquette et le bas de l'écran
 
+Vitesse = tuple[int, int]
+TAILLE_BALLE = 12
+VITESSE_INITIALE: Vitesse = (4, -4)
+
 
 def initialiser_raquette() -> pygame.Rect:
     """Crée la raquette centrée horizontalement, en bas de l'écran."""
@@ -45,9 +49,21 @@ def deplacer_raquette(raquette: pygame.Rect, touches: pygame.key.ScancodeWrapper
         raquette.right = LARGEUR
 
 
+def initialiser_balle() -> pygame.Rect:
+    """Crée la balle juste au-dessus du centre de la raquette."""
+    x = (LARGEUR - TAILLE_BALLE) // 2
+    y = HAUTEUR - MARGE_BAS - HAUTEUR_RAQUETTE - TAILLE_BALLE - 2
+    return pygame.Rect(x, y, TAILLE_BALLE, TAILLE_BALLE)
+
+
+def dessiner_balle(balle: pygame.Rect) -> None:
+    pygame.draw.ellipse(ecran, BLANC, balle)
+
+
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
+    balle = initialiser_balle()
 
     en_cours: bool = True
     while en_cours:
@@ -59,6 +75,7 @@ def main() -> None:
 
         ecran.fill(NOIR)
         dessiner_raquette(raquette)
+        dessiner_balle(balle)
         pygame.display.update()
         horloge.tick(FPS)
 
