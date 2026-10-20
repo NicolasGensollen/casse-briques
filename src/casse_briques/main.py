@@ -48,6 +48,9 @@ police = pygame.font.SysFont(None, 32)
 grande_police = pygame.font.SysFont(None, 48)
 
 ANGLE_MAX = 60 # angle maximal (en degrés) par rapport à la verticale
+BRIQUES_PAR_PALIER = 5   # accélération toutes les 5 briques détruites
+FACTEUR_ACCELERATION = 1.08
+VITESSE_MAX = 10.0       # au-delà, la balle risquerait de traverser une brique
 
 
 def initialiser_raquette() -> pygame.Rect:
@@ -202,6 +205,14 @@ def synchroniser_position(balle: pygame.Rect, position: Position) -> Position:
     return position
 
 
+def accelerer(vitesse: Vitesse) -> Vitesse:
+    """Augmente la norme de la vitesse sans changer sa direction (plafonnée)."""
+    vx, vy = vitesse
+    norme = math.hypot(vx, vy)
+    nouvelle_norme = min(norme * FACTEUR_ACCELERATION, VITESSE_MAX)
+    return vx * nouvelle_norme / norme, vy * nouvelle_norme / norme
+
+
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
@@ -211,6 +222,7 @@ def main() -> None:
     vitesse = VITESSE_INITIALE
     mur = creer_mur()
     score = 0
+    briques_detruites: int = 0
     vies = VIES_INITIALES
     game_over: bool = False
     victoire: bool = False
@@ -236,7 +248,12 @@ def main() -> None:
                 vitesse = rebondir_raquette(balle, vitesse, raquette)
                 vitesse, nb_detruites = gerer_collision_briques(balle, vitesse, mur)
                 position = synchroniser_position(balle, position)
-                score += nb_detruites * POINTS_PAR_BRIQUE
+                
+                if nb_detruites > 0:
+                    score += nb_detruites * POINTS_PAR_BRIQUE
+                    briques_detruites += nb_detruites
+                    if briques_detruites % BRIQUES_PAR_PALIER == 0:
+                        vitesse = accelerer(vitesse)
 
             if balle_perdue(balle):
                 vies -= 1
@@ -245,7 +262,6 @@ def main() -> None:
                 else:
                     raquette = initialiser_raquette()
                     position = coller_balle(balle, raquette)
-                    vitesse = VITESSE_INITIALE
                     balle_lancee = False
 
             if len(mur) == 0:
