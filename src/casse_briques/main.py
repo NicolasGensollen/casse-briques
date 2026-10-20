@@ -28,6 +28,7 @@ VITESSE_RAQUETTE = 7
 MARGE_BAS = 30  # distance entre la raquette et le bas de l'écran
 
 Vitesse = tuple[int, int]
+Position = tuple[int, int]
 TAILLE_BALLE = 12
 VITESSE_INITIALE: Vitesse = (4, -4)
 
@@ -171,16 +172,27 @@ def afficher_infos(score: int, vies: int) -> None:
     ecran.blit(texte_vies, (LARGEUR - texte_vies.get_width() - 10, 15))
 
 
-def afficher_message(message: str) -> None:
+def afficher_message(message: str, sous_titre: str = "") -> None:
     texte = grande_police.render(message, True, JAUNE)
-    position = texte.get_rect(center=(LARGEUR // 2, HAUTEUR // 2 + 60))
-    ecran.blit(texte, position)
+    ecran.blit(texte, texte.get_rect(center=(LARGEUR // 2, HAUTEUR // 2 + 60)))
+    if sous_titre:
+        texte2 = police.render(sous_titre, True, BLANC)
+        ecran.blit(texte2, texte2.get_rect(center=(LARGEUR // 2, HAUTEUR // 2 + 105)))
+
+
+def coller_balle(balle: pygame.Rect, raquette: pygame.Rect) -> Position:
+    """Place la balle au centre de la raquette (avant le lancement)."""
+    balle.centerx = raquette.centerx
+    balle.bottom = raquette.top - 2
+    return float(balle.centerx), float(balle.centery)
 
 
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
     balle = initialiser_balle()
+    position = coller_balle(balle, raquette)
+    balle_lancee: bool = False
     vitesse = VITESSE_INITIALE
     mur = creer_mur()
     score = 0
@@ -193,14 +205,22 @@ def main() -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 en_cours = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                if game_over or victoire:
+                    return True          # on relance une nouvelle partie
+                balle_lancee = True
 
         if not game_over and not victoire:
             deplacer_raquette(raquette, pygame.key.get_pressed())
-            deplacer_balle(balle, vitesse)
-            vitesse = rebondir_murs(balle, vitesse)
-            vitesse = rebondir_raquette(balle, vitesse, raquette)
-            vitesse, nb_detruites = gerer_collision_briques(balle, vitesse, mur)
-            score += nb_detruites * POINTS_PAR_BRIQUE
+            
+            if not balle_lancee:
+                position = coller_balle(balle, raquette)
+            else:
+                deplacer_balle(balle, vitesse)
+                vitesse = rebondir_murs(balle, vitesse)
+                vitesse = rebondir_raquette(balle, vitesse, raquette)
+                vitesse, nb_detruites = gerer_collision_briques(balle, vitesse, mur)
+                score += nb_detruites * POINTS_PAR_BRIQUE
 
             if balle_perdue(balle):
                 vies -= 1
@@ -208,8 +228,9 @@ def main() -> None:
                     game_over = True
                 else:
                     raquette = initialiser_raquette()
-                    balle = initialiser_balle()
+                    position = coller_balle(balle, raquette)
                     vitesse = VITESSE_INITIALE
+                    balle_lancee = False
 
             if len(mur) == 0:
                 victoire = True
@@ -225,6 +246,8 @@ def main() -> None:
             afficher_message(f"Perdu ! Score final : {score}")
         elif victoire:
             afficher_message(f"Gagné ! Score final : {score}")
+        elif not balle_lancee:
+            afficher_message("", "ESPACE pour lancer la balle")
 
         pygame.display.update()
         horloge.tick(FPS)
