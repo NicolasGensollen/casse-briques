@@ -32,6 +32,19 @@ def dessiner_raquette(raquette: pygame.Rect) -> None:
     pygame.draw.rect(ecran, TURQUOISE, raquette, border_radius=4)
 
 
+def deplacer_raquette(raquette: pygame.Rect, touches: pygame.key.ScancodeWrapper) -> None:
+    """Déplace la raquette selon les touches maintenues, sans sortir de l'écran."""
+    if touches[pygame.K_LEFT]:
+        raquette.x -= VITESSE_RAQUETTE
+    if touches[pygame.K_RIGHT]:
+        raquette.x += VITESSE_RAQUETTE
+    # On empêche la raquette de sortir de la fenêtre
+    if raquette.left < 0:
+        raquette.left = 0
+    if raquette.right > LARGEUR:
+        raquette.right = LARGEUR
+
+
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
@@ -41,6 +54,8 @@ def main() -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 en_cours = False
+
+        deplacer_raquette(raquette, pygame.key.get_pressed())
 
         ecran.fill(NOIR)
         dessiner_raquette(raquette)
