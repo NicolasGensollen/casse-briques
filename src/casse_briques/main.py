@@ -128,6 +128,19 @@ def dessiner_mur(mur: Mur) -> None:
         pygame.draw.rect(ecran, COULEURS_LIGNES[ligne], brique)
 
 
+def gerer_collision_briques(balle: pygame.Rect, vitesse: Vitesse, mur: Mur) -> tuple[Vitesse, int]:
+    """Détruit la brique touchée (s'il y en a une) et fait rebondir la balle.
+
+    Renvoie la nouvelle vitesse et le nombre de briques détruites (0 ou 1).
+    """
+    indice = balle.collidelist(mur)
+    if indice == -1:
+        return vitesse, 0
+    brique = mur.pop(indice)
+    vx, vy = vitesse
+    return (vx, -1 * vy), 1
+
+
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
@@ -145,6 +158,7 @@ def main() -> None:
         deplacer_balle(balle, vitesse)
         vitesse = rebondir_murs(balle, vitesse)
         vitesse = rebondir_raquette(balle, vitesse, raquette)
+        vitesse, nb_detruites = gerer_collision_briques(balle, vitesse, mur)
 
         ecran.fill(NOIR)
         dessiner_mur(mur)
