@@ -43,6 +43,7 @@ VIES_INITIALES = 3
 POINTS_PAR_BRIQUE = 10
 
 police = pygame.font.SysFont(None, 32)
+grande_police = pygame.font.SysFont(None, 48)
 
 
 def initialiser_raquette() -> pygame.Rect:
@@ -170,6 +171,12 @@ def afficher_infos(score: int, vies: int) -> None:
     ecran.blit(texte_vies, (LARGEUR - texte_vies.get_width() - 10, 15))
 
 
+def afficher_message(message: str) -> None:
+    texte = grande_police.render(message, True, JAUNE)
+    position = texte.get_rect(center=(LARGEUR // 2, HAUTEUR // 2 + 60))
+    ecran.blit(texte, position)
+
+
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
@@ -179,6 +186,7 @@ def main() -> None:
     score = 0
     vies = VIES_INITIALES
     game_over: bool = False
+    victoire: bool = False
     en_cours: bool = True
     
     while en_cours:
@@ -186,7 +194,7 @@ def main() -> None:
             if event.type == pygame.QUIT:
                 en_cours = False
 
-        if not game_over:
+        if not game_over and not victoire:
             deplacer_raquette(raquette, pygame.key.get_pressed())
             deplacer_balle(balle, vitesse)
             vitesse = rebondir_murs(balle, vitesse)
@@ -203,12 +211,21 @@ def main() -> None:
                     balle = initialiser_balle()
                     vitesse = VITESSE_INITIALE
 
+            if len(mur) == 0:
+                victoire = True
+
         ecran.fill(NOIR)
         dessiner_mur(mur)
         dessiner_raquette(raquette)
         if not game_over:
             dessiner_balle(balle)
         afficher_infos(score, vies)
+        
+        if game_over:
+            afficher_message(f"Perdu ! Score final : {score}")
+        elif victoire:
+            afficher_message(f"Gagné ! Score final : {score}")
+
         pygame.display.update()
         horloge.tick(FPS)
 
