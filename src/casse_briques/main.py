@@ -60,10 +60,46 @@ def dessiner_balle(balle: pygame.Rect) -> None:
     pygame.draw.ellipse(ecran, BLANC, balle)
 
 
+def deplacer_balle(balle: pygame.Rect, vitesse: Vitesse) -> None:
+    vx, vy = vitesse
+    balle.x += vx
+    balle.y += vy
+
+
+def rebondir_murs(balle: pygame.Rect, vitesse: Vitesse) -> Vitesse:
+    """Fait rebondir la balle sur les bords gauche, droit et haut.
+
+    On utilise abs() plutôt qu'une simple inversion de signe : si la balle reste
+    plusieurs images « dans » le bord, elle ne repart pas dans le mauvais sens.
+    """
+    vx, vy = vitesse
+
+    if balle.left <= 0:
+        balle.left = 0
+        vx = abs(vx)
+    elif balle.right >= LARGEUR:
+        balle.right = LARGEUR
+        vx = -abs(vx)
+    if balle.top <= 0:
+        balle.top = 0
+        vy = abs(vy)
+    return vx, vy
+
+
+def rebondir_raquette(balle: pygame.Rect, vitesse: Vitesse, raquette: pygame.Rect) -> Vitesse:
+    """Renvoie la balle vers le haut si elle touche la raquette en descendant."""
+    vx, vy = vitesse
+    if balle.colliderect(raquette) and vy > 0:
+        balle.bottom = raquette.top
+        vy = -vy
+    return vx, vy
+
+
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
     balle = initialiser_balle()
+    vitesse = VITESSE_INITIALE
 
     en_cours: bool = True
     while en_cours:
@@ -72,6 +108,9 @@ def main() -> None:
                 en_cours = False
 
         deplacer_raquette(raquette, pygame.key.get_pressed())
+        deplacer_balle(balle, vitesse)
+        vitesse = rebondir_murs(balle, vitesse)
+        vitesse = rebondir_raquette(balle, vitesse, raquette)
 
         ecran.fill(NOIR)
         dessiner_raquette(raquette)
