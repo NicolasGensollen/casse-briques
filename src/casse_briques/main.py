@@ -40,6 +40,9 @@ HAUTEUR_BRIQUE = 20
 LARGEUR_BRIQUE = (LARGEUR - (NB_COLONNES + 1) * ESPACEMENT) // NB_COLONNES
 
 VIES_INITIALES = 3
+POINTS_PAR_BRIQUE = 10
+
+police = pygame.font.SysFont(None, 32)
 
 
 def initialiser_raquette() -> pygame.Rect:
@@ -160,12 +163,20 @@ def balle_perdue(balle: pygame.Rect) -> bool:
     return balle.top > HAUTEUR
 
 
+def afficher_infos(score: int, vies: int) -> None:
+    texte_score = police.render(f"Score : {score}", True, BLANC)
+    texte_vies = police.render(f"Vies : {vies}", True, BLANC)
+    ecran.blit(texte_score, (10, 15))
+    ecran.blit(texte_vies, (LARGEUR - texte_vies.get_width() - 10, 15))
+
+
 def main() -> None:
     horloge = pygame.time.Clock()
     raquette = initialiser_raquette()
     balle = initialiser_balle()
     vitesse = VITESSE_INITIALE
     mur = creer_mur()
+    score = 0
     vies = VIES_INITIALES
     game_over: bool = False
     en_cours: bool = True
@@ -181,6 +192,7 @@ def main() -> None:
             vitesse = rebondir_murs(balle, vitesse)
             vitesse = rebondir_raquette(balle, vitesse, raquette)
             vitesse, nb_detruites = gerer_collision_briques(balle, vitesse, mur)
+            score += nb_detruites * POINTS_PAR_BRIQUE
 
             if balle_perdue(balle):
                 vies -= 1
@@ -196,6 +208,7 @@ def main() -> None:
         dessiner_raquette(raquette)
         if not game_over:
             dessiner_balle(balle)
+        afficher_infos(score, vies)
         pygame.display.update()
         horloge.tick(FPS)
 
