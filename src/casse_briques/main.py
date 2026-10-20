@@ -213,8 +213,7 @@ def accelerer(vitesse: Vitesse) -> Vitesse:
     return vx * nouvelle_norme / norme, vy * nouvelle_norme / norme
 
 
-def main() -> None:
-    horloge = pygame.time.Clock()
+def jouer_partie(horloge: pygame.time.Clock) -> bool:
     raquette = initialiser_raquette()
     balle = initialiser_balle()
     position = coller_balle(balle, raquette)
@@ -273,15 +272,20 @@ def main() -> None:
         if not game_over:
             dessiner_balle(balle)
         afficher_infos(score, vies)
-        
+       
         if game_over:
-            afficher_message(f"Perdu ! Score final : {score}")
+            afficher_message(f"Perdu ! Score final : {score}", "ESPACE pour rejouer")
         elif victoire:
-            afficher_message(f"Gagné ! Score final : {score}")
+            afficher_message(f"Gagné ! Score final : {score}", "ESPACE pour rejouer")
         elif not balle_lancee:
             afficher_message("", "ESPACE pour lancer la balle")
 
         pygame.display.update()
         horloge.tick(FPS)
 
+
+def main() -> None:
+    horloge = pygame.time.Clock()
+    while jouer_partie(horloge):
+        pass
     pygame.quit()
